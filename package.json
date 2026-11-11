@@ -1,0 +1,33 @@
+{
+  "name": "dir3-cyber-readiness",
+  "version": "1.0.0",
+  "description": "Smart Cybersecurity Readiness Assessment Platform for SMEs (NIST CSF 2.0)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test test/*.test.js",
+    "screenshots": "python3 scripts/screenshots.py http://localhost:3000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blackangiliq/issra_project.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/blackangiliq/issra_project/issues"
+  },
+  "homepage": "https://github.com/blackangiliq/issra_project#readme",
+  "dependencies": {
+    "@fontsource/ibm-plex-sans-arabic": "^5.3.0",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.0.3",
+    "cookie-session": "^2.1.1",
+    "express": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

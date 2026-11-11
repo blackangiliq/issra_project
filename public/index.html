@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>درع — منصة تقييم الجاهزية السيبرانية للشركات الصغيرة والمتوسطة</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M16 2l12 5v8c0 8-5.5 13-12 15C9.5 28 4 23 4 15V7z' fill='%230e7c6b'/></svg>" />
+  <link rel="stylesheet" href="/app.css" />
+</head>
+<body>
+  <header class="topbar" id="topbar" hidden>
+    <a class="brand" href="#/dashboard">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2l12 5v8c0 8-5.5 13-12 15C9.5 28 4 23 4 15V7z"/><path d="M11 16l4 4 7-8" class="tick"/></svg>
+      <span>درع<small>الجاهزية السيبرانية</small></span>
+    </a>
+    <nav>
+      <a href="#/dashboard" data-nav="dashboard">لوحة التحكم</a>
+      <a href="#/profile" data-nav="profile">ملف الشركة</a>
+      <a href="#/about" data-nav="about">عن الإطار</a>
+    </nav>
+    <div class="user">
+      <span id="userName"></span>
+      <button class="btn ghost sm" id="logoutBtn">خروج</button>
+    </div>
+  </header>
+  <main id="app" aria-live="polite"></main>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="/app.js"></script>
+</body>
+</html>

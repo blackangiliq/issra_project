@@ -1,0 +1,31 @@
+{
+  "company": {
+    "name": "شركة النخبة للخدمات المحاسبية",
+    "sector": "finance",
+    "employees": 18,
+    "uses_cloud": true,
+    "remote_work": true,
+    "card_payments": false,
+    "has_website": true
+  },
+  "before": {
+    "GV-1": "no", "GV-5": "informal",
+    "ID-1": "no", "ID-2": "partial", "ID-3": "no", "ID-4": "never",
+    "PR-1": "optional", "PR-2": "sometimes", "PR-3": "no", "PR-4": "policy", "PR-5": "backup_only",
+    "PR-6": "unsure", "PR-7": "manual", "PR-8": "all", "PR-9": "never", "PR-10": "some", "PR-11": "no",
+    "PR-12": "no", "PR-13": "yes", "PR-15": "partial",
+    "DE-1": "no", "DE-2": "partial", "DE-3": "informal",
+    "RS-1": "none", "RS-3": "partial",
+    "RC-1": "yes", "RC-2": "rough", "RC-3": "no"
+  },
+  "after": {
+    "GV-1": "yes", "GV-2": "current", "GV-3": "some", "GV-4": "adhoc", "GV-5": "informal",
+    "ID-1": "yes", "ID-2": "yes", "ID-3": "yes", "ID-4": "old",
+    "PR-1": "mandatory", "PR-2": "always", "PR-3": "some", "PR-4": "manager", "PR-5": "tested",
+    "PR-6": "yes", "PR-7": "auto", "PR-8": "all", "PR-9": "once", "PR-10": "all", "PR-11": "yes",
+    "PR-12": "yes", "PR-13": "yes", "PR-15": "yes",
+    "DE-1": "weekly", "DE-2": "yes", "DE-3": "yes",
+    "RS-1": "written", "RS-2": "yes", "RS-3": "yes",
+    "RC-1": "yes", "RC-2": "documented", "RC-3": "no"
+  }
+}
