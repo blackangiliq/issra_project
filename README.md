@@ -36,7 +36,7 @@
 14. [الأمان في المنصة نفسها](#14-الأمان-في-المنصة-نفسها)
 15. [القيود والتطوير المستقبلي](#15-القيود-والتطوير-المستقبلي)
 
-📄 **وثيقة المشرف:** [docs/SUPERVISOR_REPORT.md](docs/SUPERVISOR_REPORT.md) — 📑 **تقرير نموذجي PDF:** [docs/sample-report.pdf](docs/sample-report.pdf)
+📄 **وثيقة المشرف:** [docs/SUPERVISOR_REPORT.md](docs/SUPERVISOR_REPORT.md) — 🎤 **نص العرض (3 دقائق لشخصين):** [docs/PRESENTATION_SCRIPT.md](docs/PRESENTATION_SCRIPT.md) — 📑 **تقرير نموذجي PDF:** [docs/sample-report.pdf](docs/sample-report.pdf)
 
 ---
 
