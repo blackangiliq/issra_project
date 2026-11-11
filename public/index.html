@@ -8,23 +8,31 @@
   <link rel="stylesheet" href="/app.css" />
 </head>
 <body>
-  <header class="topbar" id="topbar" hidden>
-    <a class="brand" href="#/dashboard">
-      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2l12 5v8c0 8-5.5 13-12 15C9.5 28 4 23 4 15V7z"/><path d="M11 16l4 4 7-8" class="tick"/></svg>
-      <span>درع<small>الجاهزية السيبرانية</small></span>
-    </a>
-    <nav>
-      <a href="#/dashboard" data-nav="dashboard">لوحة التحكم</a>
-      <a href="#/profile" data-nav="profile">ملف الشركة</a>
-      <a href="#/about" data-nav="about">عن الإطار</a>
-    </nav>
-    <div class="user">
-      <span id="userName"></span>
-      <button class="btn ghost sm" id="logoutBtn">خروج</button>
-    </div>
-  </header>
-  <main id="app" aria-live="polite"></main>
+  <div class="shell" id="shell">
+    <aside class="side" id="side" hidden>
+      <a class="brand" href="#/">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2l12 5v8c0 8-5.5 13-12 15C9.5 28 4 23 4 15V7z"/><path d="M11 16l4 4 7-8" class="tick"/></svg>
+        <span>درع<small>لوحة الإدارة</small></span>
+      </a>
+      <nav>
+        <a href="#/" data-nav="">نظرة عامة</a>
+        <a href="#/companies" data-nav="companies company round">الشركات والأقسام</a>
+        <span class="nav-h">الإطار والمعايير</span>
+        <a href="#/criteria" data-nav="criteria question">المعايير والأسئلة</a>
+        <a href="#/functions" data-nav="functions">المحاور</a>
+        <a href="#/types" data-nav="types">أنواع الأقسام</a>
+        <span class="nav-h">النظام</span>
+        <a href="#/settings" data-nav="settings">الإعدادات والمدراء</a>
+      </nav>
+      <div class="side-user"><span id="adminName"></span><button class="btn ghost sm" id="logoutBtn">خروج</button></div>
+    </aside>
+    <main id="app" aria-live="polite"></main>
+  </div>
+  <dialog id="modal"><form method="dialog" id="modalForm"></form></dialog>
   <div class="toast" id="toast" role="status"></div>
-  <script src="/app.js"></script>
+  <script src="/js/core.js"></script>
+  <script src="/js/admin.js"></script>
+  <script src="/js/portal.js"></script>
+  <script>App.start();</script>
 </body>
 </html>

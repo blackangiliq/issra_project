@@ -36,21 +36,23 @@ function tierFor(score) {
  * تقييم شرط الظهور. يعيد:
  *   true  = يظهر   | false = يُتخطى   | null = غير معروف بعد (السؤال المرجعي لم يُجب)
  */
-function evalCondition(cond, profile, answers) {
+function evalCondition(cond, profile, answers, ids) {
   if (!cond) return true;
   if (cond.all) {
-    const r = cond.all.map((c) => evalCondition(c, profile, answers));
+    const r = cond.all.map((c) => evalCondition(c, profile, answers, ids));
     if (r.includes(false)) return false;
     return r.includes(null) ? null : true;
   }
   if (cond.any) {
-    const r = cond.any.map((c) => evalCondition(c, profile, answers));
+    const r = cond.any.map((c) => evalCondition(c, profile, answers, ids));
     if (r.includes(true)) return true;
     return r.includes(null) ? null : false;
   }
   let v;
   if (cond.profile) v = profile[cond.profile];
   else if (cond.answer) {
+    // السؤال المرجعي يُطرح على قسم آخر ← لا نقيّد به هذا القسم
+    if (ids && !ids.has(cond.answer)) return true;
     v = answers[cond.answer];
     if (v === undefined) return null;
     if (v === SKIPPED) return false; // السؤال المرجعي نفسه متخطى ← تخطي متسلسل
@@ -69,8 +71,9 @@ function evalCondition(cond, profile, answers) {
 function visibility(bank, profile, answers) {
   const effective = {}; // الإجابات الفعالة فقط (للأسئلة الظاهرة)
   const states = [];
+  const ids = new Set(bank.questions.map((q) => q.id));
   for (const q of bank.questions) {
-    const c = evalCondition(q.when, profile, effective);
+    const c = evalCondition(q.when, profile, effective, ids);
     let state;
     if (c === true) state = 'visible';
     else if (c === null) state = 'pending';
@@ -197,10 +200,14 @@ const ALERT_RULES = [
   },
 ];
 
+function alertsFromAnswers(eff, profile) {
+  return ALERT_RULES.filter((r) => r.test(eff, profile)).map(({ id, title, detail }) => ({ id, title, detail }));
+}
+
 function criticalAlerts(bank, profile, answers) {
   const eff = {};
   for (const s of visibility(bank, profile, answers)) if (s.answer !== undefined) eff[s.q.id] = s.answer;
-  return ALERT_RULES.filter((r) => r.test(eff, profile)).map(({ id, title, detail }) => ({ id, title, detail }));
+  return alertsFromAnswers(eff, profile);
 }
 
 /**
@@ -269,7 +276,144 @@ function buildReport(bank, profile, answers) {
   };
 }
 
+// =====================================================================
+//  الأقسام والشركة
+// =====================================================================
+
+/** تصنيف حجم الشركة حسب عدد الموظفين (تصنيف شائع للمنشآت الصغيرة والمتوسطة) */
+const SIZES = [
+  { code: 'micro', name: 'متناهية الصغر', range: '1–9' },
+  { code: 'small', name: 'صغيرة', range: '10–49' },
+  { code: 'medium', name: 'متوسطة', range: '50–249' },
+];
+function sizeOf(employees) {
+  if (employees < 10) return 'micro';
+  if (employees < 50) return 'small';
+  return 'medium';
+}
+
+/**
+ * بنك أسئلة قسم معيّن: الأسئلة الفعالة + المناسبة لحجم الشركة + الموجهة لنوع القسم
+ * (السؤال بلا توجيه يُطرح على جميع الأقسام)
+ */
+function bankFor(bank, profile, typeId) {
+  const size = profile.size || sizeOf(profile.employees || 1);
+  return {
+    functions: bank.functions,
+    questions: bank.questions.filter((q) => q.active !== false
+      && (!q.sizes || !q.sizes.length || q.sizes.includes(size))
+      && (!q.targets || !q.targets.length || q.targets.includes(typeId))),
+  };
+}
+
+function itemScores(sub, profile, answers) {
+  const out = [];
+  for (const { q, state, answer } of visibility(sub, profile, answers)) {
+    let s;
+    if (state === 'skipped_zero') s = 0;
+    else if (state === 'visible' && answer !== undefined) s = optionScore(q, answer);
+    else continue;
+    if (s === null || s === undefined) continue;
+    out.push({ q, s, answer: state === 'visible' ? answer : null, state });
+  }
+  return out;
+}
+
+/**
+ * تجميع نتائج الشركة من إجابات أقسامها:
+ *  - لكل سؤال: متوسط درجات الأقسام التي أجابت عليه
+ *  - درجات الوظائف والدرجة الكلية بالأوزان المعدّلة
+ *  - مصفوفة (قسم × وظيفة)
+ *  - توصيات على مستوى الشركة مع الأقسام المعنية بكل توصية
+ */
+function aggregate(bank, profile, depts) {
+  const perQ = {}; // qid -> { q, entries: [{dept, s, answer}] }
+  const deptResults = [];
+  for (const d of depts) {
+    const sub = bankFor(bank, profile, d.typeId);
+    const items = itemScores(sub, profile, d.answers || {});
+    const sc = score(sub, profile, d.answers || {});
+    deptResults.push({
+      id: d.id, name: d.name, typeId: d.typeId, status: d.status,
+      overall: items.length ? sc.overall : null,
+      functions: Object.fromEntries(sc.functions.map((f) => [f.code, f.score])),
+      questions: sub.questions.length, answered: Object.keys(d.answers || {}).length,
+    });
+    for (const it of items) {
+      (perQ[it.q.id] = perQ[it.q.id] || { q: it.q, entries: [] }).entries.push({ dept: d, s: it.s, answer: it.answer });
+    }
+  }
+
+  const fnAcc = Object.fromEntries(bank.functions.map((f) => [f.code, { num: 0, den: 0 }]));
+  let num = 0; let den = 0;
+  const questionStats = [];
+  for (const { q, entries } of Object.values(perQ)) {
+    const avg = entries.reduce((t, e) => t + e.s, 0) / entries.length;
+    const { weight, reasons } = adjustedWeight(q, profile);
+    if (fnAcc[q.fn]) { fnAcc[q.fn].num += weight * avg; fnAcc[q.fn].den += weight; }
+    num += weight * avg; den += weight;
+    questionStats.push({ q, avg, weight, reasons, entries });
+  }
+  const r1 = (x) => Math.round(x * 10) / 10;
+  const overall = den ? r1((num / den) * 100) : 0;
+  const functions = bank.functions.map((f) => ({
+    code: f.code, name: f.name, en: f.name_en || f.en,
+    score: fnAcc[f.code].den ? r1((fnAcc[f.code].num / fnAcc[f.code].den) * 100) : null,
+  }));
+
+  // التوصيات
+  const recs = [];
+  for (const st of questionStats) {
+    if (st.avg >= 1) continue;
+    const weak = st.entries.filter((e) => e.s < 1 && e.answer && st.q.rec[e.answer]);
+    if (!weak.length) continue;
+    const worst = weak.reduce((m, e) => (e.s < m.s ? e : m));
+    const r = st.q.rec[worst.answer];
+    recs.push({
+      questionId: st.q.id, fn: st.q.fn, ref: st.q.ref, question: st.q.text,
+      title: r.title, action: r.action, priority: r.priority, effort: r.effort, cost: r.cost, days: r.days,
+      impact: Math.round(st.weight * (1 - st.avg) * 100) / 100, gain: den ? r1((st.weight * (1 - st.avg)) / den * 100) : 0,
+      weightReasons: st.reasons, departments: weak.map((e) => e.dept.name), unlocks: [],
+    });
+  }
+  recs.sort((a, b) => PRIORITY_RANK[b.priority] - PRIORITY_RANK[a.priority] || b.impact - a.impact);
+  recs.forEach((r, i) => { r.rank = i + 1; });
+  const quickWins = recs.filter((r) => r.effort === 'low' && ['free', 'low'].includes(r.cost)
+    && ['critical', 'high'].includes(r.priority));
+  const plan = {
+    week: recs.filter((r) => r.days <= 7),
+    month: recs.filter((r) => r.days > 7 && r.days <= 30),
+    quarter: recs.filter((r) => r.days > 30),
+  };
+  const sum = (arr) => arr.reduce((t, r) => t + r.gain, 0);
+  const projected = {
+    afterQuickWins: Math.min(100, r1(overall + sum(quickWins))),
+    afterWeek: Math.min(100, r1(overall + sum(plan.week))),
+    afterMonth: Math.min(100, r1(overall + sum(plan.week) + sum(plan.month))),
+  };
+
+  // الثغرات المركّبة: نأخذ أضعف إجابة لكل سؤال عبر الأقسام
+  const worstAnswers = {};
+  for (const st of questionStats) {
+    const w = st.entries.filter((e) => e.answer).sort((a, b) => a.s - b.s)[0];
+    if (w) worstAnswers[st.q.id] = w.answer;
+  }
+  const scored = functions.filter((f) => f.score !== null);
+  return {
+    overall, tier: tierFor(overall), functions,
+    weakest: scored.slice().sort((a, b) => a.score - b.score)[0] || null,
+    strongest: scored.slice().sort((a, b) => b.score - a.score)[0] || null,
+    departments: deptResults,
+    alerts: alertsFromAnswers(worstAnswers, profile),
+    recommendations: recs, quickWins: quickWins.map((r) => r.questionId), plan, projected,
+    questionStats: questionStats.map((s) => ({
+      id: s.q.id, fn: s.q.fn, text: s.q.text, avg: r1(s.avg * 100), weight: s.weight,
+      answers: s.entries.map((e) => ({ dept: e.dept.name, label: e.answer ? (s.q.options.find((o) => o.value === e.answer) || {}).label : 'تم التخطي (متطلب غير موجود)', score: r1(e.s * 100) })),
+    })).sort((a, b) => a.avg - b.avg),
+  };
+}
+
 module.exports = {
-  TIERS, tierFor, evalCondition, visibility, nextQuestion,
-  adjustedWeight, score, criticalAlerts, recommendations, buildReport,
+  TIERS, SIZES, tierFor, sizeOf, evalCondition, visibility, nextQuestion, bankFor, aggregate,
+  adjustedWeight, score, criticalAlerts, alertsFromAnswers, recommendations, buildReport,
 };

@@ -7,7 +7,8 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "test": "node --test test/*.test.js",
-    "screenshots": "python3 scripts/screenshots.py http://localhost:3000"
+    "screenshots": "python3 scripts/screenshots.py http://localhost:3000",
+    "reset": "node -e \"require('fs').rmSync('data',{recursive:true,force:true});console.log('تم حذف قاعدة البيانات؛ ستُنشأ من جديد مع البيانات التجريبية عند التشغيل')\""
   },
   "repository": {
     "type": "git",
